@@ -1,6 +1,6 @@
 <?php
 
-require_once __DIR__.'/vendor/autoload.php';
+require_once __DIR__ . '/vendor/autoload.php';
 
 use Github\HttpClient\CachedHttpClient;
 use Github\Client;
@@ -18,7 +18,7 @@ class IssueCheck
         );
 
         $apiToken = $parameters['apiToken'];
-        if (strlen($apiToken)) {
+        if (strlen($apiToken) > 0) {
             $this->client->authenticate($apiToken, null, Client::AUTH_HTTP_TOKEN);
         }
     }
@@ -37,7 +37,13 @@ class IssueCheck
     public static function getInstance()
     {
         if (self::$instance === null) {
-            $parameters = parse_ini_file('parameters.ini');
+            $paramsFile = __DIR__ . DIRECTORY_SEPARATOR . 'parameters.ini';
+            if (file_exists($paramsFile)) {
+                $parameters = parse_ini_file($paramsFile);
+            } else {
+                $dir = __DIR__;
+                die("parameters.ini not found in $dir!");
+            }
             self::$instance = new self($parameters);
         }
 

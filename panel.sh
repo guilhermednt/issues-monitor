@@ -1,2 +1,3 @@
 #!/bin/bash
-php /home/gdnt/projects/netbeans/issue-monitor/panel.php
+DIR="$( cd "$( dirname "$0" )" && pwd )"
+php "$DIR/panel.php"
