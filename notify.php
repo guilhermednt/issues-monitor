@@ -1,6 +1,6 @@
 <?php
 
-require_once './config.php';
+require_once 'config.php';
 
 use \IssueCheck;
 
@@ -35,7 +35,7 @@ if (count($messages) > 3) {
     $body = $messages;
 }
 
-$githubLogo = realpath('images/GitHub-Mark-Light-120px-plus.png');
+$githubLogo = realpath(__DIR__ . '/images/GitHub-Mark-Light-120px-plus.png');
 $command = sprintf('notify-send --icon="%s" "%s" "%s"', $githubLogo, $title,
                    implode(PHP_EOL, $body));
 system($command);
