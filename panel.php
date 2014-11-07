@@ -33,4 +33,4 @@ if (count($issues) === 1) {
     $text = count($issues);
 }
 
-echo sprintf($template, htmlspecialchars($text), $githubLogo, htmlspecialchars(implode(PHP_EOL, $messages)));
+echo sprintf($template, htmlspecialchars($text), $githubLogo, implode(PHP_EOL, $messages));
