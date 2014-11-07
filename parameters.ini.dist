@@ -1,1 +1,2 @@
 apiToken = your_GitHub_API_Token
+titleMaxLength = 40

@@ -5,6 +5,7 @@ require_once 'config.php';
 use \IssueCheck;
 
 $client = IssueCheck::getInstance()->getClient();
+$maxLength = IssueCheck::getInstance()->getConfig('titleMaxLength');
 
 $currentUser = $client->currentUser()->show();
 $username = $currentUser['login'];
@@ -25,11 +26,11 @@ $template = ''
 
 if (count($issues) === 1) {
     $text = reset($messages);
-    if (strlen($text) > 30) {
-        $text = substr($text, 0, 27) . '...';
+    if (strlen($text) > $maxLength) {
+        $text = substr($text, 0, $maxLength - 3) . '...';
     }
 } else {
     $text = count($issues);
 }
 
-echo sprintf($template, $text, $githubLogo, implode(PHP_EOL, $messages));
+echo sprintf($template, htmlspecialchars($text), $githubLogo, htmlspecialchars(implode(PHP_EOL, $messages)));

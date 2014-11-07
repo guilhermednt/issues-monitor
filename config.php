@@ -10,6 +10,7 @@ class IssueCheck
 
     private static $instance;
     private $client;
+    private $config;
 
     protected function __construct($parameters)
     {
@@ -21,6 +22,8 @@ class IssueCheck
         if (strlen($apiToken) > 0) {
             $this->client->authenticate($apiToken, null, Client::AUTH_HTTP_TOKEN);
         }
+        unset($parameters['apiToken']);
+        $this->setConfig($parameters);
     }
 
     /**
@@ -48,6 +51,17 @@ class IssueCheck
         }
 
         return self::$instance;
+    }
+
+    public function getConfig($key)
+    {
+        return $this->config[$key];
+    }
+
+    private function setConfig($config)
+    {
+        $this->config = $config;
+        return $this;
     }
 
 }
