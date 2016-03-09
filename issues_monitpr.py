@@ -1,18 +1,30 @@
 import os
 import json
+import time
 import pprint
 import signal
 import requests
+import threading
 import webbrowser
 from tendo import singleton
-from gi.repository import Gtk as gtk
+from gi.repository import Gtk as gtk, Gdk as gdk
 from ConfigParser import SafeConfigParser
 from gi.repository import AppIndicator3 as appindicator
+
+me = singleton.SingleInstance()
+
+config = SafeConfigParser()
+config.read('config.ini')
+githubKey = config.get('github', 'api_key')
+
+APPINDICATOR_ID = 'issues_monitor'
 
 class App:
     def __init__(self, indicator_id, githubKey):
         self.indicator = appindicator.Indicator.new(indicator_id, os.path.abspath('fluidicon.png'), appindicator.IndicatorCategory.SYSTEM_SERVICES)
+        self.indicator.set_status(appindicator.IndicatorStatus.ACTIVE)
         self.githubKey = githubKey
+        threading.Thread(target=loop_sleep).start()
 
     def get_indicator(self):
         return self.indicator
@@ -24,6 +36,7 @@ class App:
         return response.json()
 
     def update_indicator(self):
+        self.indicator.set_label('...', '...')
         issues = self.fetch_issues()
         count = len(issues)
         self.indicator.set_label(str(count), str(count + 1))
@@ -58,34 +71,24 @@ class App:
         global gtk
         gtk.main_quit()
 
-me = singleton.SingleInstance()
-
-config = SafeConfigParser()
-config.read('config.ini')
+def loop_sleep():
+    global app
+    while True:
+        if app:
+            app.update_indicator()
+        time.sleep(5)
 
 githubKey = config.get('github', 'api_key')
-
-APPINDICATOR_ID = 'issues_monitor'
+app = App(APPINDICATOR_ID, githubKey)
 
 def main():
-    app = App(APPINDICATOR_ID, githubKey)
-    indicator = app.get_indicator()
-    indicator.set_status(appindicator.IndicatorStatus.ACTIVE)
-    indicator.set_menu(build_menu())
+    global app
     app.update_indicator()
+
+    gdk.threads_init()
+    gdk.threads_enter()
     gtk.main()
-
-def build_menu():
-    menu = gtk.Menu()
-    item_quit = gtk.MenuItem('Quit')
-    item_quit.connect('activate', quit)
-    menu.append(gtk.MenuItem('Teste'))
-    menu.append(item_quit)
-    menu.show_all()
-    return menu
-
-def quit(source):
-    gtk.main_quit()
+    gdk.threads_leave()
 
 if __name__ == "__main__":
     signal.signal(signal.SIGINT, signal.SIG_DFL)
