@@ -1,13 +1,13 @@
 import os
+import json
 import pprint
 import signal
 import requests
-import json
 import webbrowser
-from gi.repository import Gtk as gtk
-from gi.repository import AppIndicator3 as appindicator
 from tendo import singleton
+from gi.repository import Gtk as gtk
 from ConfigParser import SafeConfigParser
+from gi.repository import AppIndicator3 as appindicator
 
 class App:
     def __init__(self, indicator_id, githubKey):
@@ -36,6 +36,10 @@ class App:
             item = gtk.MenuItem(self.issue_to_string(issue))
             item.connect('activate', self.open_issue, issue['html_url'])
             menu.append(item)
+        menu.append(gtk.SeparatorMenuItem())
+        item = gtk.MenuItem('Quit')
+        item.connect('activate', self.quit)
+        menu.append(item)
         menu.show_all()
         return menu
 
@@ -49,6 +53,10 @@ class App:
     def open_issue(self, item, url):
         global webbrowser
         webbrowser.open_new_tab(url);
+
+    def quit(self, source):
+        global gtk
+        gtk.main_quit()
 
 me = singleton.SingleInstance()
 
