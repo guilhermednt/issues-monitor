@@ -1,6 +1,4 @@
 import os
-import json
-import time
 import pprint
 import signal
 import requests
@@ -24,7 +22,9 @@ class App:
         self.indicator = appindicator.Indicator.new(indicator_id, os.path.abspath('fluidicon.png'), appindicator.IndicatorCategory.SYSTEM_SERVICES)
         self.indicator.set_status(appindicator.IndicatorStatus.ACTIVE)
         self.githubKey = githubKey
-        threading.Thread(target=loop_sleep).start()
+
+        self.quit_event = threading.Event()
+        threading.Thread(target=loop_sleep, args=(1, self.quit_event)).start()
 
     def get_indicator(self):
         return self.indicator
@@ -40,21 +40,43 @@ class App:
         issues = self.fetch_issues()
         count = len(issues)
         self.indicator.set_label(str(count), str(count + 1))
-        self.indicator.set_menu(self.issues_menu(issues))
+        menu = self.get_menu(self.indicator)
+        self.issues_menu(self.get_menu(self.indicator), issues)
+        
+    def get_menu(self, indicator):
+        menu = indicator.get_menu()
+        if isinstance(menu, gtk.Menu):
+            return menu
+        else:
+            menu = gtk.Menu()
+            menu.show_all()
+            indicator.set_menu(menu)
+            return menu
 
-    def issues_menu(self, issues):
+    def issues_menu(self, menu, issues):
         global gtk
-        menu = gtk.Menu()
+        self.clear_menu(menu)
         for issue in issues:
             item = gtk.MenuItem(self.issue_to_string(issue))
             item.connect('activate', self.open_issue, issue['html_url'])
             menu.append(item)
-        menu.append(gtk.SeparatorMenuItem())
+            item.show()
+
+        item = gtk.SeparatorMenuItem()
+        menu.append(item)
+        item.show()
+
         item = gtk.MenuItem('Quit')
         item.connect('activate', self.quit)
         menu.append(item)
+        item.show()
+
         menu.show_all()
         return menu
+
+    def clear_menu(self, menu):
+        for i in menu.get_children():
+            menu.remove(i)
 
     def issue_to_string(self, issue):
         return '[%s#%s] %s' % (issue['repository']['full_name'], issue['number'], issue['title'])
@@ -69,14 +91,26 @@ class App:
 
     def quit(self, source):
         global gtk
+        self.quit_event.set()
         gtk.main_quit()
+        exit()
 
-def loop_sleep():
+def loop_sleep(arg1, quit_event):
     global app
-    while True:
-        if app:
+    while not quit_event.is_set():
+        try:
+            app
+        except NameError as e:
+            pprint.pprint(e)
+            quit_event.wait(1)
+            continue
+        else:
             app.update_indicator()
-        time.sleep(5)
+
+        quit_event.wait(30)
+
+    gtk.main_quit()
+    exit()
 
 githubKey = config.get('github', 'api_key')
 app = App(APPINDICATOR_ID, githubKey)
