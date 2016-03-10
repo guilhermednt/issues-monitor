@@ -2,4 +2,6 @@ nbproject
 vendor
 parameters.ini
 config.ini
+issues_monitor.log
+
 
