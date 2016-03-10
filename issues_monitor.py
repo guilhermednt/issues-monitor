@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
 import os
+import sys, getopt
 import pprint
 import signal
 import requests
@@ -13,15 +15,35 @@ from gi.repository import AppIndicator3 as appindicator
 
 me = singleton.SingleInstance()
 
+def warning(*objs):
+    print("WARNING: ", *objs, file=sys.stderr)
+
+DIR = os.path.dirname(os.path.realpath(__file__))
+configfile = DIR + '/config.ini'
+
+argv = sys.argv[1:]
+try:
+    opts, args = getopt.getopt(argv,"hc:",["config="])
+except getopt.GetoptError as e:
+    pprint.pprint(e)
+    warning('issues_monitor.py -c <configfile>')
+    sys.exit(2)
+for opt, arg in opts:
+    if opt == '-h':
+        print('issues_monitor.py -c <configfile>')
+        sys.exit()
+    elif opt in ("-c", "--config"):
+        configfile = arg
+
 config = SafeConfigParser()
-config.read('config.ini')
+config.read(configfile)
 githubKey = config.get('github', 'api_key')
 
 APPINDICATOR_ID = 'issues_monitor'
 
 class App:
     def __init__(self, indicator_id, githubKey):
-        self.indicator = appindicator.Indicator.new(indicator_id, os.path.abspath('fluidicon.png'), appindicator.IndicatorCategory.SYSTEM_SERVICES)
+        self.indicator = appindicator.Indicator.new(indicator_id, os.path.abspath(DIR + '/fluidicon.png'), appindicator.IndicatorCategory.SYSTEM_SERVICES)
         self.indicator.set_status(appindicator.IndicatorStatus.ACTIVE)
         self.githubKey = githubKey
 
@@ -85,7 +107,7 @@ class App:
 
     def print_issues(self, issues):
         for issue in issues:
-            print self.issue_to_string(issue)
+            print(self.issue_to_string(issue))
 
     def open_issue(self, item, url):
         global webbrowser
@@ -103,7 +125,7 @@ def loop_sleep(arg1, quit_event):
         try:
             app
         except NameError as e:
-            pprint.pprint(e)
+            warning(e)
             quit_event.wait(1)
             continue
         else:
