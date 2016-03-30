@@ -1,2 +1,5 @@
 [github]
 api_key = generate your key at https://github.com/settings/tokens
+
+[issues_monitor]
+interval = 30
